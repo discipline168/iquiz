@@ -1,0 +1,20 @@
+server:
+  port: 5001
+
+spring:
+  profiles:
+    active: dev
+
+#日志
+logging:
+  level:
+    com.discipline.iquiz.mapper: debug
+
+
+mybatis:
+  config-location: classpath:mybatis/mybatis-config.xml
+  mapper-locations: classpath:mybatis/mapper/*.xml
+
+
+
+
