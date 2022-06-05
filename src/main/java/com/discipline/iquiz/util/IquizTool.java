@@ -3,6 +3,7 @@ package com.discipline.iquiz.util;
 import cn.hutool.core.util.RandomUtil;
 import com.discipline.iquiz.jwt.util.JWTUtil;
 import com.discipline.iquiz.mapper.OptionMapper;
+import com.discipline.iquiz.mapper.QuestionMapper;
 import com.discipline.iquiz.po.Option;
 import com.discipline.iquiz.po.Question;
 import com.discipline.iquiz.vo.QuestionVo;
@@ -73,7 +74,8 @@ public class IquizTool {
     /**
      * 获取客观题的选项/答案集合并转换成vo
      * @param que 题目po
-     * @isShowAnswer 是否展示答案
+     * @param optionMapper
+     * @param isShowAnswer 是否展示答案
      **/
     public static QuestionVo formatQue(Question que, OptionMapper optionMapper, boolean isShowAnswer){
         QuestionVo questionVo=new QuestionVo(que.getId(),que.getContent(),que.getType(),que.getPoint());
@@ -84,17 +86,42 @@ public class IquizTool {
             if(que.getType()==IquizConstant.SINGLE_CHOICE_QUESTION||
                     que.getType()==IquizConstant.MULTI_CHOICE_QUESTION){
                 //获取选项集合
-                List<Option> options = optionMapper.getOptionsByIdsAndTid(que.getOptionIds().split(","));
+                List<Option> options = optionMapper.getOptionsByIds(que.getOptionIds().split(","));
                 if(options.size()>0)
                     questionVo.setOptions(options);
             }
             //获取正确选项（答案）集合
             if(isShowAnswer){
-                List<Option> answer = optionMapper.getOptionsByIdsAndTid(que.getAnswerIds().split(","));
+                List<Option> answer = optionMapper.getOptionsByIds(que.getAnswerIds().split(","));
                 if(answer.size()>0)
                     questionVo.setAnswer(answer);
             }
         }
         return questionVo;
+    }
+
+    /**
+     * 根据id数组查询题目信息并装饰成vo集合
+     * @param ids 题目id数组
+     * @param questionMapper
+     * @param optionMapper
+     * @return 题集信息和该题集的总权值
+     **/
+    public static Map<String,Object> GetQuestionsAndPointsByIds(String[] ids, QuestionMapper questionMapper,OptionMapper optionMapper){
+        ArrayList<QuestionVo> questions = new ArrayList<>();
+        float point=0;
+        Map<String, Object> map = new HashMap<>();
+
+        for(String qid:ids){
+            Question que = questionMapper.getQuestionById(qid);
+            if(que==null)
+                return null;
+            QuestionVo questionVo = IquizTool.formatQue(que, optionMapper, true);
+            point+=questionVo.getPoint();
+            questions.add(questionVo);
+        }
+        map.put("questions",questions);
+        map.put("point",point);
+        return map;
     }
 }

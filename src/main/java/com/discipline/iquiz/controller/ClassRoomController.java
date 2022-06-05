@@ -8,6 +8,7 @@ import com.discipline.iquiz.service.impl.ClassRoomServiceImpl;
 import com.discipline.iquiz.vo.ClassRoomVo;
 import com.discipline.iquiz.vo.JsonData;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mysql.jdbc.StringUtils;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresRoles;
@@ -34,14 +35,12 @@ public class ClassRoomController {
     @RequiresRoles("teacher")
     @PostMapping("/add")
     @ResponseBody
-    public String add(String name) throws Exception {
+    public String add(String name,String cover) throws Exception {
         /*String token= SecurityUtils.getSubject().getPrincipal().toString();
         String id = JWTUtil.getInfoByToken(token).get("id").asString();*/
-
-        String id = JWTUtil.getInfoByToken(SecurityUtils.getSubject().getPrincipal().toString()).get("id").asString();
-        int result = classRoomServiceImpl.addClassRoom(name, id);
-        if(result==1)
-            return objectMapper.writeValueAsString(JsonData.success("添加班级成功",null));
+        String id = classRoomServiceImpl.addClassRoom(name, cover);
+        if(!StringUtils.isNullOrEmpty(id))
+            return objectMapper.writeValueAsString(JsonData.success("添加班级成功",id));
         return objectMapper.writeValueAsString(JsonData.fail("添加班级失败"));
     }
 

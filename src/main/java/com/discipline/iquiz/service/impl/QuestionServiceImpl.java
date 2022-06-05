@@ -82,6 +82,7 @@ public class QuestionServiceImpl implements QuestionService {
             String userId = "666999666";
 
             List<String>oidList;
+            List<String> aidList;
             String answerIds = null;
             String optionIds = null;
 
@@ -92,6 +93,8 @@ public class QuestionServiceImpl implements QuestionService {
                 if(optionContents!=null){
                     //添加选项(当类型为填空题时里面存储则是填空答案内容集)并返回id集合
                     oidList=new ArrayList<>();
+                    aidList=new ArrayList<>();
+
                     for (String str:optionContents){
                         if(StringUtils.isNullOrEmpty(str))
                             continue;
@@ -119,9 +122,11 @@ public class QuestionServiceImpl implements QuestionService {
                         //拼接正确选项id
                         answerIds = "";
                         for (int index:answerIndexes){
-                            answerIds+=oidList.get(index)+",";
+                            aidList.add(oidList.get(index));
+                            //answerIds+=oidList.get(index)+",";
                         }
 
+                        answerIds=String.join(",",aidList);
                         optionIds=String.join(",",oidList);
                     }
                     //当为填空题时，其答案id集合即为先前所添加的选项id集合

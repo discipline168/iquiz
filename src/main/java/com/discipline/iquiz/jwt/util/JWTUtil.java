@@ -12,7 +12,7 @@ import java.util.Map;
 
 @Component
 public class JWTUtil {
-    private static final long EXPIRE_TIME = 1000 * 60 * 120;
+    private static final long EXPIRE_TIME = 1000 * 60 * 60 * 6;
     private static final String TOKEN_SECRET = "disciplineiquiz";
 
     public static String generateToken(String id,String password,int role){

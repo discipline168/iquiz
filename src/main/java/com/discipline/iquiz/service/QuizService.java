@@ -9,4 +9,6 @@ public interface QuizService {
     String addQuiz(Quiz quiz);
     Quiz getQuizPreview(String id);
     List<Quiz> getBeToCompletedQuizzes();
+    int open(String id);
+
 }

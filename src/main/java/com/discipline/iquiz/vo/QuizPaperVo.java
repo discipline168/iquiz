@@ -5,14 +5,17 @@ import lombok.Data;
 import java.util.List;
 import java.util.Map;
 
+/**
+ *  考试试卷vo
+ **/
 @Data
-public class QuizResultVo {
+public class QuizPaperVo {
     private String id;
     private String uid;
     private Quiz quiz;
     private Map<String, List<QuestionVo>> questions;
 
-    public QuizResultVo(String id,String uid,Quiz quiz){
+    public QuizPaperVo(String id, String uid, Quiz quiz){
         this.id=id;
         this.uid=uid;
         this.quiz=quiz;

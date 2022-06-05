@@ -61,8 +61,9 @@ public class QuizController {
         Quiz quiz = quizServiceImpl.getQuizPreview(id);
 
         if(quiz!=null){
-            QuizVo quizVo = new QuizVo(quiz.getId(),quiz.getName(),quiz.getClassId(),quiz.getMode(),quiz.getRandomNum(),
-                    quiz.getQbankId(),quiz.getIsRandomOption(),quiz.getIsPreview(),quiz.getDuration(),quiz.getTime());
+            QuizVo quizVo = new QuizVo(quiz.getId(),quiz.getName(),quiz.getCid(),quiz.getMode(),quiz.getRandomNum(),
+                    quiz.getQbankId(),quiz.getIsRandomOption(),quiz.getIsPreview(),quiz.getDuration()
+                    ,quiz.getTime(),quiz.getStatus());
             List<QuestionVo> questionVos=new ArrayList<>();
 
             if(quiz.getMode()== IquizConstant.NORMAL_MODE_QUIZ){
@@ -95,5 +96,16 @@ public class QuizController {
     }
 
 
-    //todo 新增quiz启用接口，启用考试后发放试卷给课堂学生
+    /**
+     * 教师-启用考试发放试卷
+     **/
+    @RequiresRoles("teacher")
+    @PostMapping("/open")
+    @ResponseBody
+    public String open(String id) throws Exception {
+        int result = quizServiceImpl.open(id);
+        if(result>0)
+            return objectMapper.writeValueAsString(JsonData.success("启用考试成功",null));
+        return objectMapper.writeValueAsString(JsonData.fail("启用考试失败"));
+    }
 }

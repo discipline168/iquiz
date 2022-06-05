@@ -6,6 +6,7 @@ import lombok.Data;
 public class QuizResult {
     private String id;
     private String qid;
+    private String uid;
     private String scQuestionIds;
     private String mcQuestionIds;
     private String bfQuestionIds;
@@ -16,7 +17,13 @@ public class QuizResult {
     private String bfAnswer;
     private String subAnswer;
 
-    private float ob_score;
-    private float sub_score;
+    private String subPerScore;
+
+    private double scScore=0;
+    private double mcScore=0;
+    private double bfScore=0;
+    private double subScore=0;
+    private double perPointScore;
+
     private int state;
 }

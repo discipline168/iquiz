@@ -22,6 +22,9 @@ public interface QuestionMapper {
     @Select("SELECT * FROM `question` WHERE tid = #{tid} AND id = #{id} AND del_flag = 0")
     Question getQuestionByTidAndId(@Param("tid")String tid,@Param("id")String id);
 
-    @Select("SELECT id,content,type,point,option_ids FROM `question` WHERE id = #{id} ")
+    @Select("SELECT * FROM `question` WHERE id = #{id} ")
     Question getQuestionById(@Param("id")String id);
+
+    @Select("SELECT * FROM `question` WHERE type = #{type} ORDER BY rand() LIMIT #{num}")
+    List<Question> getRandomQuestionByTypeAndNum(@Param("type")int type,@Param("num")int num);
 }

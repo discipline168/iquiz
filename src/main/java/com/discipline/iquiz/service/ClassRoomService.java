@@ -7,7 +7,7 @@ import java.sql.SQLException;
 import java.util.List;
 
 public interface ClassRoomService {
-    int addClassRoom(String name,String tid) throws SQLException;
+    String addClassRoom(String name,String cover) throws SQLException;
 
     List<ClassRoom> getTClassRooms();
 

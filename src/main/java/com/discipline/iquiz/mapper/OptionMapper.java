@@ -16,7 +16,7 @@ public interface OptionMapper {
             "</foreach>",
             "</script>"
     })
-    List<Option> getOptionsByIdsAndTid(@Param("ids")String[]ids);
+    List<Option> getOptionsByIds(@Param("ids")String[]ids);
 
 //    @Select({
 //            "<script>",

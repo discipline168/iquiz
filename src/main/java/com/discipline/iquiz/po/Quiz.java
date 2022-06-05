@@ -10,7 +10,8 @@ import java.util.Date;
 public class Quiz {
     private String id;
     private String name;
-    private String classId;
+    private String cid;
+    private String tid;
     private int mode;
     private String randomNum;
     private String qbankId;
@@ -20,4 +21,5 @@ public class Quiz {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm", timezone = "GMT+8")
     private Date time;
     private String questionIds;
+    private int status;
 }

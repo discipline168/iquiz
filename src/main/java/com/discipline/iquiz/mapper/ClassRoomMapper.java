@@ -11,8 +11,8 @@ import java.util.List;
 
 public interface ClassRoomMapper {
 
-    @Insert("INSERT INTO `classroom` (id,name,tid) VALUES(#{id},#{name},#{tid})")
-    int addClassRoom(@Param("id") String id,@Param("name") String name,@Param("tid") String tid)
+    @Insert("INSERT INTO `classroom` (id,name,cover,tid) VALUES(#{id},#{name},#{cover},#{tid})")
+    int addClassRoom(@Param("id") String id,@Param("name") String name,@Param("cover") String cover,@Param("tid") String tid)
             throws SQLException;
 
     @Select("SELECT * FROM `classroom` WHERE tid= #{tid} AND del_flag = 0")

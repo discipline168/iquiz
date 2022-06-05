@@ -9,4 +9,7 @@ public class IquizConstant {
     public static int NORMAL_MODE_QUIZ=0;
     public static int RANDOM_MODE_QUIZ=1;
 
+    public static int QUIZ_INACTIVATED=0;
+    public static int QUIZ_ACTIVATED=1;
+
 }

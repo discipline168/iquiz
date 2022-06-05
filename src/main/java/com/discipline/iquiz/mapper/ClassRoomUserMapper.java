@@ -1,5 +1,7 @@
 package com.discipline.iquiz.mapper;
 
+import com.discipline.iquiz.po.ClassRoom;
+import com.discipline.iquiz.po.ClassRoomUser;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
@@ -13,4 +15,7 @@ public interface ClassRoomUserMapper {
 
     @Select("SELECT cid FROM `classroom_user` WHERE uid = #{uid} AND del_flag = 0")
     List<String> getCidsByUid(@Param("uid")String uid);
+
+    @Select("SELECT * FROM `classroom_user` WHERE cid = #{cid} AND del_flag = 0")
+    List<ClassRoomUser> getStudentIdsByCid(@Param("cid")String cid);
 }

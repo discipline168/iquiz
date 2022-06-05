@@ -20,7 +20,7 @@ public interface QuizMapper {
     int deleteQuizzByIdAndTid(@Param("id") String id, @Param("tid") String tid);
 
     @Insert("INSERT INTO `quiz` VALUES(#{id}, #{name}, #{tid}, #{cid}, #{mode}, #{randomNum}, #{qbank_id}, #{is_preview}, " +
-            "#{is_random_option}, #{duration}, #{time}, #{question_ids}, 0)")
+            "#{is_random_option}, #{duration}, #{time}, #{question_ids}, 0, 0)")
     int addQuiz(@Param("id") String id, @Param("name")String name, @Param("tid")String tid,
                 @Param("cid")String cid, @Param("mode")int mode, @Param("randomNum")String randomNum,
                 @Param("qbank_id")String qbankId,@Param("is_preview")int isPreview,
@@ -33,5 +33,8 @@ public interface QuizMapper {
     //todo 方法冗余待优化
     @Select("SELECT * FROM `quiz` WHERE id = #{id}")
     Quiz getQuizById(@Param("id")String id);
+
+    @Update("UPDATE `quiz` SET status = #{status} WHERE id = #{id}")
+    int updateQuizStatus(@Param("id")String id,@Param("status")int status);
 
 }

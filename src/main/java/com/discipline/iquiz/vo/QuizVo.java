@@ -23,11 +23,12 @@ public class QuizVo {
     private int duration;
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm", timezone = "GMT+8")
     private Date time;
+    private int status;
 
     private Map<String,List<QuestionVo>> questions;
 
     public QuizVo(String id, String name, String classId, int mode, String randomNum,
-                  String qbankId, int isRandomOption, int isPreview, int duration, Date time) {
+                  String qbankId, int isRandomOption, int isPreview, int duration, Date time,int status) {
         this.id=id;
         this.name=name;
         this.classId=classId;
@@ -38,5 +39,6 @@ public class QuizVo {
         this.isPreview=isPreview;
         this.duration=duration;
         this.time=time;
+        this.status=status;
     }
 }

@@ -6,6 +6,7 @@ import lombok.Data;
 public class ClassRoomUser {
     private String id;
     private String cid;
+    private String tid;
     private String uid;
     private String sname;
     private String sno;

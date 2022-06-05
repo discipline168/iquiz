@@ -23,16 +23,19 @@ public class ClassRoomServiceImpl implements ClassRoomService {
     QbankMapper qbankMapper;
 
     @Override
-    public int addClassRoom(String name, String tid) throws SQLException {
+    public String addClassRoom(String name, String cover) throws SQLException {
+
         String id= IquizTool.generateRandomString("",6,true);
         int result;
         try {
-            result=classRoomMapper.addClassRoom(id,name,tid);
+            result=classRoomMapper.addClassRoom(id,name,cover,IquizTool.getUserId());
         }catch (Exception e){
-            id= IquizTool.generateRandomString("",6,true);
-            result=classRoomMapper.addClassRoom(id,name,tid);
+            e.printStackTrace();
+            return null;
         }
-        return result;
+        if(result>0)
+            return id;
+        return null;
     }
 
     @Override
