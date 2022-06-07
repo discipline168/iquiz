@@ -5,6 +5,7 @@ import cn.hutool.core.util.NumberUtil;
 import com.discipline.iquiz.mapper.*;
 import com.discipline.iquiz.po.*;
 import com.discipline.iquiz.service.QuizResultService;
+import com.discipline.iquiz.util.IquizConstant;
 import com.discipline.iquiz.util.IquizTool;
 import com.discipline.iquiz.vo.QuestionVo;
 import com.discipline.iquiz.vo.QuizPaperVo;
@@ -87,6 +88,8 @@ public class QuizResultServiceImpl implements QuizResultService {
             //获取答案信息
             Quiz quiz = quizMapper.getQuizById(origin.getQid());
 
+            List<String>scBriefStatus,mcBriefStatus,bfBriefStatus,obBriefStatus=new ArrayList<>();
+
             int state=2;
 
 
@@ -97,7 +100,8 @@ public class QuizResultServiceImpl implements QuizResultService {
 
                 if(scQids.length!=scPickIds.length)
                     return -1;
-
+                //单选题对错情况简要
+                scBriefStatus = new ArrayList<>();
 
                 Question question;
                 System.out.println("----------单选题判断----------");
@@ -111,10 +115,22 @@ public class QuizResultServiceImpl implements QuizResultService {
                     System.out.println(scQids[i]+"-提交答案:"+scPickIds[i]);
 
                     scPoints+=question.getPoint();
+
+                    if(scPickIds[i].equals("-1")) {
+                        //未完成
+                        scBriefStatus.add(IquizConstant.QUE_UNDONE);
+                        continue;
+                    }
+
+                    //正确
                     if(question.getAnswerIds().equals(scPickIds[i])){
                         scGet+=question.getPoint();
-                    }
+                        scBriefStatus.add(IquizConstant.QUE_CORRECT);
+                    }else
+                        //错误
+                        scBriefStatus.add(IquizConstant.QUE_WRONG);
                 }
+                obBriefStatus.addAll(scBriefStatus);
             }
             //多选题
             if(!StringUtils.isNullOrEmpty(origin.getMcQuestionIds())){
@@ -125,6 +141,9 @@ public class QuizResultServiceImpl implements QuizResultService {
 
                 if(mcQids.length!=mcAnswer.length)
                     return -1;
+
+                //多选题对错情况简要
+                mcBriefStatus = new ArrayList<>();
 
                 System.out.println("----------多选题判断----------");
 
@@ -141,21 +160,32 @@ public class QuizResultServiceImpl implements QuizResultService {
                     System.out.println(mcQids[i]+"-正确答案:"+ArrayUtil.toString(answerIds));
                     System.out.println(mcQids[i]+"-提交答案:"+ArrayUtil.toString(mcPickIds));
 
+                    if(mcPickIds[0].equals("-1")) {
+                        mcBriefStatus.add(IquizConstant.QUE_UNDONE);
+                        continue;
+                    }
+
                     //多选题评分标准，少选一半分，错误没分，全选满分
                     float flag=1;
                     for (String pickId:mcPickIds){
+
                         if(!ArrayUtil.contains(answerIds,pickId)) {
                             flag = 0;
+                            mcBriefStatus.add(IquizConstant.QUE_WRONG);
                             break;
                         }
                     }
                     //少选
-                    if(flag!=0&&answerIds.length!=mcPickIds.length)
+                    if(flag!=0&&answerIds.length!=mcPickIds.length) {
+                        mcBriefStatus.add(IquizConstant.QUE_HALF_CORRECT);
                         flag = 0.5f;
+                    }else if(flag ==1){
+                        mcBriefStatus.add(IquizConstant.QUE_CORRECT);
+                    }
 
                     mcGet+=question.getPoint()*flag;
                 }
-
+                obBriefStatus.addAll(mcBriefStatus);
             }
 
 
@@ -167,6 +197,8 @@ public class QuizResultServiceImpl implements QuizResultService {
                     return -1;
 
                 Question question;
+                //填空题对错情况简要
+                bfBriefStatus = new ArrayList<>();
 
                 System.out.println("----------填空题判断----------");
 
@@ -184,17 +216,27 @@ public class QuizResultServiceImpl implements QuizResultService {
                     System.out.println(bfQids[i]+"-正确答案:"+options);
                     System.out.println(bfQids[i]+"-提交答案:"+bfAnswer[i]);
 
+                    if(bfAnswer[i].trim().equals("")){
+                        bfBriefStatus.add(IquizConstant.QUE_UNDONE);
+                        continue;
+                    }
+
                     float flag =0;
                     for(Option op: options){
                         //填空题评分标准：正确答案集内有存在所提交的答案即为正确
                         if(op.getContent().equals(bfAnswer[i])){
+                            bfBriefStatus.add(IquizConstant.QUE_CORRECT);
                             flag=1;
                             break;
                         }
                     }
+                    if(flag==0)
+                        bfBriefStatus.add(IquizConstant.QUE_WRONG);
                     bfGet+=question.getPoint()*flag;
                 }
+                obBriefStatus.addAll(bfBriefStatus);
             }
+
 
             sumPoints=scPoints+mcPoints+bfPoints;
             //主观题
@@ -229,10 +271,12 @@ public class QuizResultServiceImpl implements QuizResultService {
             System.out.println("单选题："+scScore);
             System.out.println("多选题:"+mcScore);
             System.out.println("填空题："+bfScore);
+            System.out.println("客观题对错情况简要："+obBriefStatus);
 
 
-            return quizResultMapper.quizHandIn(quizResult.getId(), quizResult.getScAnswerIds(), quizResult.getMcAnswerIds(),
-                    quizResult.getBfAnswer(), quizResult.getSubAnswer(), scScore,mcScore,bfScore, state, userId);
+            return quizResultMapper.quizHandIn(quizResult.getId(), quizResult.getScAnswerIds(),
+                    quizResult.getMcAnswerIds(),quizResult.getBfAnswer(), quizResult.getSubAnswer(),
+                    scScore,mcScore,bfScore, state,String.join(",",obBriefStatus),userId);
 
         }
         return -1;
@@ -262,6 +306,8 @@ public class QuizResultServiceImpl implements QuizResultService {
             qrVo.setSubScore(quizResult.getSubScore());
             qrVo.setState(quizResult.getState());
             qrVo.setPerPointScore(quizResult.getPerPointScore());
+            if(quizResult.getObBriefStatus()!=null)
+                qrVo.setObBriefStatus(quizResult.getObBriefStatus().split(","));
 
 
             String[] strs = quizResult.getSubPerScore().split(",");
@@ -349,7 +395,8 @@ public class QuizResultServiceImpl implements QuizResultService {
             if(scPoints!=0)
                 qrVo.setSubAllScore(NumberUtil.round(100*(subPoints/sumPoints),2));
 
-            List<Integer> rank = rank(quiz.getId(), id);
+
+            List<Integer> rank = rank(quizResultMapper.getRankIdsByQid(quiz.getId()), id);
             if(rank!=null){
                 qrVo.setNum(rank.get(0));
                 qrVo.setRank(rank.get(1));
@@ -363,13 +410,17 @@ public class QuizResultServiceImpl implements QuizResultService {
 
 
     /**
-     * 教师-查看班级学生单次成绩结果
+     * 教师-查看班级学生单次成绩结果集
      * @param qid 考试id
+     * @return map集合 'quiz':考试信息；'cqresult':考试结果集
      **/
     @Override
-    public List<QuizResultVo> getClassQuizResult(String qid) {
+    public Map<String,Object> getClassQuizResults(String qid) {
+        Map<String,Object>map=new HashMap<>();
+
         Quiz quiz = quizMapper.getQuizById(qid);
         if (quiz != null) {
+            map.put("quiz",quiz);
 
             //todo 判断登录用户是否为该班级教师
             //获取所属班级的学生列表
@@ -378,10 +429,17 @@ public class QuizResultServiceImpl implements QuizResultService {
             List<QuizResultVo> results = new ArrayList<>();
 
             if (students.size() > 0) {
+                List<String> rankIds = quizResultMapper.getRankIdsByQid(quiz.getId());
+
+                //放置 <"知识点名称",[正确数量,出现总数量]>
+                Map<String,Integer[]> knowledgePoints = new HashMap<>();
+
                 for (ClassRoomUser student : students) {
                     QuizResult result = quizResultMapper.getQuizResultByQidAndUid(qid, student.getUid());
+                    List<Integer> rank;
                     if (result != null) {
                         QuizResultVo qrVo = new QuizResultVo();
+                        qrVo.setStudent(student);
                         qrVo.setId(result.getId());
                         qrVo.setStudent(student);
                         qrVo.setScScore(result.getScScore());
@@ -391,10 +449,54 @@ public class QuizResultServiceImpl implements QuizResultService {
                         qrVo.setState(result.getState());
                         qrVo.setPerPointScore(result.getPerPointScore());
 
+                        qrVo.setRank(rank(rankIds, result.getId())
+                                            .get(1));
+
+                        //知识点正确率统计
+                        qrVo.setObBriefStatus(result.getObBriefStatus().split(","));
+
+                        String []qids = new String[0];
+                        if(result.getScQuestionIds()!=null){
+                            String[] scQid = result.getScQuestionIds().split(",");
+                            qids=ArrayUtil.addAll(scQid);
+                        }
+                        if(result.getMcQuestionIds()!=null){
+                            String[] mcQid = result.getMcQuestionIds().split(",");
+                            qids=ArrayUtil.addAll(qids,mcQid);
+                        }
+                        if(result.getBfQuestionIds()!=null){
+                            String[] bfQid = result.getBfQuestionIds().split(",");
+                            qids=ArrayUtil.addAll(qids,bfQid);
+                        }
+
+                        String[] obBriefStatus = result.getObBriefStatus().split(",");
+
+                        if(qids.length>0){
+                            for (int i=0;i<qids.length;i++){
+                                Question question = questionMapper.getQuestionById(qids[i]);
+                                if(question!=null){
+                                    //获取知识点名称
+                                    if(StringUtils.isNullOrEmpty(question.getKnowledge()))
+                                        continue;
+                                    Integer[] correctAndSum = knowledgePoints.get(question.getKnowledge());
+                                    //若map里没有此知识点便新增该键值对
+                                    if(correctAndSum==null){
+                                        knowledgePoints.put(question.getKnowledge(),
+                                                new Integer[]{obBriefStatus[i].equals(IquizConstant.QUE_CORRECT)?1:0,1});
+                                    }else{
+                                        knowledgePoints.put(question.getKnowledge(),
+                                                new Integer[]{obBriefStatus[i].equals(IquizConstant.QUE_CORRECT)
+                                                        ?correctAndSum[0]+1:correctAndSum[0],correctAndSum[1]+1});
+                                    }
+                                }
+                            }
+                        }
                         results.add(qrVo);
                     }
                 }
-                return results;
+                map.put("knowledge",knowledgePoints);
+                map.put("cqresult",results);
+                return map;
             }
 
         }
@@ -456,13 +558,12 @@ public class QuizResultServiceImpl implements QuizResultService {
 
     /**
      * 排名计算
-     * @param qid 考试id
+     * @param ids 按成绩倒序查找出的学生id集合
      * @param id 所计算排名的学生考试结果信息id
      * @return list第一个元素放置考试总人数，第二个元素放置排名
      **/
-    public List<Integer> rank(String qid,String id){
+    public List<Integer> rank(List<String> ids,String id){
         //按照总分对试卷id进行排序
-        List<String> ids = quizResultMapper.getRankIdsByQid(qid);
         if(ids.size()>0){
             List<Integer> list=new ArrayList<>();
             for(int i=0;i<ids.size();i++){

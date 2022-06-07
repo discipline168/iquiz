@@ -78,13 +78,17 @@ public class QuestionServiceImpl implements QuestionService {
         int type = questionDto.getType();
         if(!StringUtils.isNullOrEmpty(questionDto.getContent())&&type!=0&&type<5){
 
-            //String userId = IquizTool.getUserId();
-            String userId = "666999666";
+            String userId = IquizTool.getUserId();
+            //String userId = "666999666";
 
+            //选项id列表
             List<String>oidList;
+            //答案id列表
             List<String> aidList;
-            String answerIds = null;
+
             String optionIds = null;
+            String answerIds = null;
+
 
             //如果题型为客观题，则需额外进行选项添加操作
             if(type!=IquizConstant.SUBJECTIVE_QUESTION){

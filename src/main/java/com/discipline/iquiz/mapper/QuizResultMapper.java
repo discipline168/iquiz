@@ -23,11 +23,12 @@ public interface QuizResultMapper {
 
     @Update("UPDATE `quiz_result` SET sc_answer_ids = #{scAids} ,mc_answer_ids = #{mcAids} ," +
             "bf_answer = #{bfAnswer} ,sub_answer = #{subAnswer} ,sc_score = #{scScore}, mc_score = #{mcScore}, bf_score = #{bfScore}, " +
-            "state = #{state} WHERE id = #{id} AND uid = #{uid}")
+            "state = #{state}, ob_brief_status = #{obBriefStatus} WHERE id = #{id} AND uid = #{uid}")
     int quizHandIn(@Param("id")String id, @Param("scAids")String scAids, @Param("mcAids")String mcAids,
                    @Param("bfAnswer")String bfAnswer, @Param("subAnswer") String subAnswer,
                    @Param("scScore") BigDecimal scScore,@Param("mcScore") BigDecimal mcScore,
-                   @Param("bfScore") BigDecimal bfScore, @Param("state")int state, @Param("uid")String uid);
+                   @Param("bfScore") BigDecimal bfScore, @Param("state")int state, @Param("obBriefStatus")String obBriefStatus,
+                   @Param("uid")String uid);
 
 
     @Update("UPDATE `quiz_result` SET sub_per_score = #{subPerScore},sub_score = #{subScore}, state = 2 WHERE id = #{id}")

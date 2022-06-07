@@ -3,7 +3,11 @@ server:
 
 spring:
   profiles:
-    active: dev
+    active: prod
+  mvc:
+    async:
+      request-timeout: 1500
+
 
 #日志
 logging:

@@ -1,5 +1,6 @@
 package com.discipline.iquiz;
 
+import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.RandomUtil;
 import com.discipline.iquiz.dto.QuestionDto;
 import com.discipline.iquiz.mapper.OptionMapper;
@@ -38,6 +39,11 @@ public class IquizApplicationTest {
         que.setAnswerIndexes(new int []{3});
 
         questionService.addQuestionToQbank(que);
+    }
+
+    @Test
+    void just(){
+        System.out.println(ArrayUtil.addAll(new String[0])[0]);
     }
 
 }

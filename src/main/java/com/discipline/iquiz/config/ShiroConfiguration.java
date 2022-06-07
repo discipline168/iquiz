@@ -1,10 +1,14 @@
 package com.discipline.iquiz.config;
 
 import com.discipline.iquiz.jwt.filter.JWTFilter;
+import com.discipline.iquiz.shiro.CustomWebSubjectFactory;
 import com.discipline.iquiz.shiro.ShiroDatabaseRealm;
+import org.apache.shiro.mgt.DefaultSessionStorageEvaluator;
+import org.apache.shiro.mgt.DefaultSubjectDAO;
 import org.apache.shiro.spring.security.interceptor.AuthorizationAttributeSourceAdvisor;
 import org.apache.shiro.spring.web.ShiroFilterFactoryBean;
 import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
+import org.apache.shiro.web.mgt.DefaultWebSubjectFactory;
 import org.springframework.aop.framework.autoproxy.DefaultAdvisorAutoProxyCreator;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,10 +25,26 @@ public class ShiroConfiguration {
         return new ShiroDatabaseRealm();
     }
 
+    @Bean
+    public DefaultWebSubjectFactory subjectFactory() {
+        //禁用session
+        return new CustomWebSubjectFactory();
+    }
+
     @Bean("securityManager")
     public DefaultWebSecurityManager securityManager(ShiroDatabaseRealm shiroDatabaseRealm){
         DefaultWebSecurityManager securityManager = new DefaultWebSecurityManager();
         securityManager.setRealm(shiroDatabaseRealm);
+
+        DefaultSubjectDAO subjectDAO = new DefaultSubjectDAO();
+        DefaultSessionStorageEvaluator sessionStorageEvaluator = new DefaultSessionStorageEvaluator();
+        // 禁用 session 存储
+        sessionStorageEvaluator.setSessionStorageEnabled(false);
+        subjectDAO.setSessionStorageEvaluator(sessionStorageEvaluator);
+        securityManager.setSubjectDAO(subjectDAO);
+        // 禁用 rememberMe
+        securityManager.setRememberMeManager(null);
+
         return securityManager;
     }
 

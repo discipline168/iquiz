@@ -14,6 +14,7 @@ public class Question {
     private String answerIds;
     private String qbankId;
     private String tid;
+    private String knowledge;
 
 
     public Question(String content,int type,int point){

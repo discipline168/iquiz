@@ -26,4 +26,5 @@ public class QuizResult {
     private double perPointScore;
 
     private int state;
+    private String obBriefStatus;
 }
