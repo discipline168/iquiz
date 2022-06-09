@@ -22,7 +22,10 @@ public interface ClassRoomMapper {
             "AND `classroom_user`.cid = `classroom`.id AND `classroom_user`.del_flag = 0 AND `classroom`.del_flag = 0")
     List<ClassRoom> getClassRoomsBySid(@Param("sid")String sid);
 
-    ClassRoomVo getClassRoomById(@Param("id") String id);
+
+    @Select("SELECT * FROM `classroom` WHERE id = #{id}")
+    ClassRoom getClassRoomById(@Param("id") String id);
+    //ClassRoomVo getClassRoomById(@Param("id") String id);
 
     @Select("SELECT * FROM `classroom_user` WHERE cid = #{cid} ")
     List<ClassRoomUser> getClassRoomUsersByCid(@Param("cid")String cid);

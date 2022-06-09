@@ -1,5 +1,15 @@
 server:
   port: 5001
+  #kurento配置
+#  ssl:
+#    key-store: classpath:keystore.jks
+#    key-store-password: kurento
+#    key-store-type: JKS
+#    key-alias: kurento-selfsigned
+
+#kurento流媒体服务器地址
+#kms:
+#  url: ws://8.210.32.42:8888/kurento
 
 spring:
   profiles:
@@ -8,11 +18,11 @@ spring:
     async:
       request-timeout: 1500
 
-
 #日志
-logging:
-  level:
-    com.discipline.iquiz.mapper: debug
+#logging:
+#  level:
+#    com.discipline.iquiz.mapper: debug
+
 
 
 mybatis:

@@ -16,6 +16,9 @@ public interface QuizMapper {
             "AND cid = #{cid} AND del_flag = 0")
     List<Quiz> getToBeCompletedQuizzesByCid(@Param("cid")String cid);
 
+    @Select("SELECT * FROM `quiz` WHERE  cid = #{cid} AND del_flag = 0 AND status != 0")
+    List<Quiz> getActivedQuizzesByCid(@Param("cid")String cid);
+
     @Update("UPDATE `quiz` SET del_flag = 1 WHERE id = #{id} AND tid = #{tid}")
     int deleteQuizzByIdAndTid(@Param("id") String id, @Param("tid") String tid);
 
@@ -36,5 +39,8 @@ public interface QuizMapper {
 
     @Update("UPDATE `quiz` SET status = #{status} WHERE id = #{id}")
     int updateQuizStatus(@Param("id")String id,@Param("status")int status);
+
+
+
 
 }

@@ -23,10 +23,10 @@ public class UserController {
     @PostMapping("/login")
     @ResponseBody
     public String login(String username,String password, HttpServletResponse response) throws Exception {
-        Map<String, String> data = userServiceImpl.jwtLogin(username, password);
+        Map<String, Object> data = userServiceImpl.jwtLogin(username, password);
         if(data==null)
             return objectMapper.writeValueAsString(JsonData.fail(""));
-        response.setHeader("Authorization", data.get("token"));
+        response.setHeader("Authorization", data.get("token").toString());
         return objectMapper.writeValueAsString(JsonData.success("",data));
 
     }

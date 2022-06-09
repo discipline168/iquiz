@@ -3,8 +3,10 @@ package com.discipline.iquiz.service.impl;
 import com.discipline.iquiz.mapper.ClassRoomMapper;
 import com.discipline.iquiz.mapper.QbankMapper;
 import com.discipline.iquiz.mapper.QuizMapper;
+import com.discipline.iquiz.mapper.UserMapper;
 import com.discipline.iquiz.po.ClassRoom;
 import com.discipline.iquiz.po.Quiz;
+import com.discipline.iquiz.po.User;
 import com.discipline.iquiz.service.ClassRoomService;
 import com.discipline.iquiz.util.IquizTool;
 import com.discipline.iquiz.vo.ClassRoomVo;
@@ -21,6 +23,8 @@ public class ClassRoomServiceImpl implements ClassRoomService {
     QuizMapper quizMapper;
     @Resource
     QbankMapper qbankMapper;
+    @Resource
+    UserMapper userMapper;
 
     @Override
     public String addClassRoom(String name, String cover) throws SQLException {
@@ -58,7 +62,10 @@ public class ClassRoomServiceImpl implements ClassRoomService {
     @Override
     public ClassRoomVo getClassRoomInfo(String id) {
         //todo 判断登录用户是否与该课堂存在关联
-        ClassRoomVo classRoomVo = classRoomMapper.getClassRoomById(id);
+        ClassRoom room = classRoomMapper.getClassRoomById(id);
+        //获取教师信息
+        User user = userMapper.getUserInfoById(room.getTid());
+        ClassRoomVo classRoomVo = new ClassRoomVo(room,user);
         //获取考试列表信息
         if(classRoomVo!=null){
             classRoomVo.setQuizzes(quizMapper.getQuizzesByCid(classRoomVo.getId()));

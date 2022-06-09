@@ -1,5 +1,6 @@
 package com.discipline.iquiz.mapper;
 
+import com.discipline.iquiz.po.Option;
 import com.discipline.iquiz.po.Quiz;
 import com.discipline.iquiz.po.QuizResult;
 import org.apache.ibatis.annotations.Insert;
@@ -23,11 +24,13 @@ public interface QuizResultMapper {
 
     @Update("UPDATE `quiz_result` SET sc_answer_ids = #{scAids} ,mc_answer_ids = #{mcAids} ," +
             "bf_answer = #{bfAnswer} ,sub_answer = #{subAnswer} ,sc_score = #{scScore}, mc_score = #{mcScore}, bf_score = #{bfScore}, " +
-            "state = #{state}, ob_brief_status = #{obBriefStatus} WHERE id = #{id} AND uid = #{uid}")
+            "sub_score = #{subScore} , sub_per_score = #{subPerScore}, state = #{state}, ob_brief_status = #{obBriefStatus} WHERE id = #{id} AND uid = #{uid}")
     int quizHandIn(@Param("id")String id, @Param("scAids")String scAids, @Param("mcAids")String mcAids,
                    @Param("bfAnswer")String bfAnswer, @Param("subAnswer") String subAnswer,
                    @Param("scScore") BigDecimal scScore,@Param("mcScore") BigDecimal mcScore,
-                   @Param("bfScore") BigDecimal bfScore, @Param("state")int state, @Param("obBriefStatus")String obBriefStatus,
+                   @Param("bfScore") BigDecimal bfScore, @Param("subScore")BigDecimal subScore,
+                   @Param("subPerScore") String subPerScore,
+                   @Param("state")int state, @Param("obBriefStatus")String obBriefStatus,
                    @Param("uid")String uid);
 
 
@@ -46,6 +49,10 @@ public interface QuizResultMapper {
 
     @Select("SELECT * FROM `quiz_result` WHERE uid = #{uid} ")
     List<QuizResult> getQuizResultsByUid(@Param("uid")String uid);
+
+
+    @Select("SELECT * FROM `quiz_result` WHERE uid = #{uid} AND  qid = #{qid}")
+    QuizResult getQuizResultsByUidAndQid(@Param("uid")String uid,@Param("qid")String qid);
 
 
 }

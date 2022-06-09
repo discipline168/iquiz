@@ -9,5 +9,5 @@ public class ClassRoom {
     private String id;
     private String name;
     private String cover;
-    private int tid;
+    private String tid;
 }

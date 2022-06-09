@@ -90,53 +90,50 @@ public class QuestionServiceImpl implements QuestionService {
             String answerIds = null;
 
 
-            //如果题型为客观题，则需额外进行选项添加操作
-            if(type!=IquizConstant.SUBJECTIVE_QUESTION){
+            //选项添加操作
+            String[] optionContents = questionDto.getOptionContents();
+            if(optionContents!=null){
+                //添加选项(当类型为填空题时里面存储则是填空答案内容集)并返回id集合
+                oidList=new ArrayList<>();
+                aidList=new ArrayList<>();
 
-                String[] optionContents = questionDto.getOptionContents();
-                if(optionContents!=null){
-                    //添加选项(当类型为填空题时里面存储则是填空答案内容集)并返回id集合
-                    oidList=new ArrayList<>();
-                    aidList=new ArrayList<>();
-
-                    for (String str:optionContents){
-                        if(StringUtils.isNullOrEmpty(str))
-                            continue;
-                        int result;
-                        String oid=IquizTool.generateRandomString("op_",10,false);
-                        try {
-                            result=optionMapper.addOption(oid, str, userId);
-                        }catch (Exception e){
-                            oid=IquizTool.generateRandomString("op_",10,false);
-                            result=optionMapper.addOption(oid, str, userId);
-                        }
-
-                        if(result>0)
-                            oidList.add(oid);
+                for (String str:optionContents){
+                    if(StringUtils.isNullOrEmpty(str.trim()))
+                        continue;
+                    int result;
+                    String oid=IquizTool.generateRandomString("op_",10,false);
+                    try {
+                        result=optionMapper.addOption(oid, str, userId);
+                    }catch (Exception e){
+                        oid=IquizTool.generateRandomString("op_",10,false);
+                        result=optionMapper.addOption(oid, str, userId);
                     }
 
-                    //当为选择题时，则从下标数组里获取正确选项id集合
-                    if(type==IquizConstant.SINGLE_CHOICE_QUESTION
-                            ||type==IquizConstant.MULTI_CHOICE_QUESTION){
+                    if(result>0)
+                        oidList.add(oid);
+                }
 
-                        int[] answerIndexes = questionDto.getAnswerIndexes();
-                        if(answerIndexes==null)
-                            return null;
+                //当为选择题时，则从下标数组里获取正确选项id集合
+                if(type==IquizConstant.SINGLE_CHOICE_QUESTION
+                        ||type==IquizConstant.MULTI_CHOICE_QUESTION){
 
-                        //拼接正确选项id
-                        answerIds = "";
-                        for (int index:answerIndexes){
-                            aidList.add(oidList.get(index));
-                            //answerIds+=oidList.get(index)+",";
-                        }
+                    int[] answerIndexes = questionDto.getAnswerIndexes();
+                    if(answerIndexes==null)
+                        return null;
 
-                        answerIds=String.join(",",aidList);
-                        optionIds=String.join(",",oidList);
+                    //拼接正确选项id
+                    answerIds = "";
+                    for (int index:answerIndexes){
+                        aidList.add(oidList.get(index));
+                        //answerIds+=oidList.get(index)+",";
                     }
-                    //当为填空题时，其答案id集合即为先前所添加的选项id集合
-                    else{
-                        answerIds=String.join(",",oidList);
-                    }
+
+                    answerIds=String.join(",",aidList);
+                    optionIds=String.join(",",oidList);
+                }
+                //当为填空题或主观题时，其答案id集合即为先前所添加的选项id集合
+                else{
+                    answerIds=String.join(",",oidList);
                 }
             }
 
@@ -145,11 +142,11 @@ public class QuestionServiceImpl implements QuestionService {
 
             try {
                 result=questionMapper.addQuestionToQbank(qid,questionDto.getContent(),questionDto.getType(),
-                        questionDto.getPoint(),optionIds,answerIds,questionDto.getQbankId(),userId,new Date());
+                        questionDto.getPoint(),optionIds,answerIds,questionDto.getQbankId(),userId,new Date(),questionDto.getKnowledge());
             }catch (Exception e){
                 qid=IquizTool.generateRandomString("que_",8,false);
                 result=questionMapper.addQuestionToQbank(qid,questionDto.getContent(),questionDto.getType(),
-                        questionDto.getPoint(),optionIds,answerIds,questionDto.getQbankId(),userId,new Date());
+                        questionDto.getPoint(),optionIds,answerIds,questionDto.getQbankId(),userId,new Date(),questionDto.getKnowledge());
             }
 
             if(result>0)

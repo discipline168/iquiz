@@ -1,5 +1,7 @@
 package com.discipline.iquiz.service.impl;
 
+import cn.hutool.core.text.Simhash;
+import cn.hutool.core.text.TextSimilarity;
 import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.NumberUtil;
 import com.discipline.iquiz.mapper.*;
@@ -14,7 +16,10 @@ import com.mysql.jdbc.StringUtils;
 import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Consumer;
 
 @Service
 public class QuizResultServiceImpl implements QuizResultService {
@@ -39,6 +44,10 @@ public class QuizResultServiceImpl implements QuizResultService {
 
         if(quizResult!=null){
             //todo 考试时间判断，未在考试时间范围内不予返回结果
+
+            if(quizResult.getState()!=IquizConstant.QUIZ_RESULT_UNDONE){
+                return new QuizPaperVo(quizResult.getId(),userId,null);
+            }
 
             QuizPaperVo quizPaperVo = new QuizPaperVo(quizResult.getId(),userId,
                     //获取考试信息
@@ -72,7 +81,7 @@ public class QuizResultServiceImpl implements QuizResultService {
 
 
     /**
-     * 学生-提交答题信息并自动对其客观题进行评分
+     * 学生-提交答题信息并自动对其进行自动评分
      * @param  quizResult 试卷po
      **/
     @Override
@@ -81,12 +90,23 @@ public class QuizResultServiceImpl implements QuizResultService {
         if(!StringUtils.isNullOrEmpty(quizResult.getId())){
             String userId = IquizTool.getUserId();
             QuizResult origin = quizResultMapper.getQuizResultByIdAndUid(quizResult.getId(), userId);
-            //todo 如果state不为0则不让提交，时间过了也不予提交
+            //试卷状态已改变不予提交
+            if(origin.getState()!=IquizConstant.QUIZ_RESULT_UNDONE)
+                return -1;
+
             //单/多选/填空题目/总权值、获得的权值
             float scPoints=0,mcPoints=0,bfPoints=0,sumPoints=0,scGet=0,mcGet=0,bfGet=0;
 
             //获取答案信息
             Quiz quiz = quizMapper.getQuizById(origin.getQid());
+
+            //考试时间过期不予提交
+            Date now = new Date(new Date().getTime()-60 * 1000 * quiz.getDuration());
+//            if(quiz.getTime().before(now))
+//                return -1;
+
+
+            double perPointScore = origin.getPerPointScore();
 
             List<String>scBriefStatus,mcBriefStatus,bfBriefStatus,obBriefStatus=new ArrayList<>();
 
@@ -239,31 +259,78 @@ public class QuizResultServiceImpl implements QuizResultService {
 
 
             sumPoints=scPoints+mcPoints+bfPoints;
+
+            //主观题每题的得分
+            List<String>subPerScore = null;
+            BigDecimal subScore = null;
+
             //主观题
             if(!StringUtils.isNullOrEmpty(origin.getSubQuestionIds())){
-                //主观题在初始提交阶段不做判断，只顺势统计题目权值，并将考试状态设置为“待批阅”
-                state=1;
+
+                //state=1;
 
                 System.out.println("----------主观题判断----------");
 
                 String[] subQids = origin.getSubQuestionIds().split(",");
-                for (String qid:subQids){
-                    Question question = questionMapper.getQuestionById(qid);
+
+                String[] myAnswers = quizResult.getSubAnswer().split("\\*\\^\\*");
+
+                //主观题每题得分
+                subPerScore=new ArrayList<>();
+
+                //主观题总得分
+                subScore = new BigDecimal(0);
+
+                System.out.println(String.join(",",subQids));
+
+                for (int j=0;j<subQids.length;j++){
+                    Question question = questionMapper.getQuestionById(subQids[j]);
+                    
                     if(question==null)
                         return -2;
                     sumPoints+=question.getPoint();
+                    
+                    //todo 如果考试开启主观题自动判分则自动判分
+                    //得分点答案id集合
+                    if(!StringUtils.isNullOrEmpty(question.getAnswerIds())){
+                        String[] aids = question.getAnswerIds().split(",");
+                        List<Option> answers = optionMapper.getOptionsByIds(aids);
+                        double get=0;
+                        double similarity = IquizTool.findSimilarity(answers.get(0).getContent(), myAnswers[j]);
+                        System.out.println("标准答案："+answers.get(0).getContent());
+                        System.out.println("我的答案："+myAnswers[j]);
+                        System.out.println("相似度："+similarity);
 
-                    System.out.println(qid+"-题目权值:"+question.getPoint());
+                        if(similarity>0.75)
+                            get+=1;
+                        else if(similarity>0.5)
+                            get+=0.5;
+                        else if(similarity>0.3)
+                            get+=0.25;
+                        else
+                            get+=0;
+                        //最终得分
+                        BigDecimal decimal = NumberUtil.round(perPointScore * get *question.getPoint() , 2);
+                        subPerScore.add(decimal.toString());
+                        subScore=subScore.add(decimal);
 
+                        System.out.println(subQids[j]+"-题目权值:"+question.getPoint());
+                    }
                 }
+
+
             }
 
             //todo 逻辑待优化，或可将题目总权值存入数据库中
 
+//            BigDecimal scScore = NumberUtil.round(scGet * (100 / sumPoints), 2);
+//            BigDecimal mcScore = NumberUtil.round(mcGet * (100 / sumPoints), 2);
+//            BigDecimal bfScore = NumberUtil.round(bfGet * (100 / sumPoints), 2);
 
-            BigDecimal scScore = NumberUtil.round(scGet * (100 / sumPoints), 2);
-            BigDecimal mcScore = NumberUtil.round(mcGet * (100 / sumPoints), 2);
-            BigDecimal bfScore = NumberUtil.round(bfGet * (100 / sumPoints), 2);
+            BigDecimal scScore = NumberUtil.round(scGet * perPointScore, 2);
+            BigDecimal mcScore = NumberUtil.round(mcGet * perPointScore, 2);
+            BigDecimal bfScore = NumberUtil.round(bfGet * perPointScore, 2);
+
 
 
             System.out.println("---------最后得分----------");
@@ -272,11 +339,16 @@ public class QuizResultServiceImpl implements QuizResultService {
             System.out.println("多选题:"+mcScore);
             System.out.println("填空题："+bfScore);
             System.out.println("客观题对错情况简要："+obBriefStatus);
+            System.out.println("主观题得分："+String.join(",",subPerScore));
+            System.out.println("主观题总得分："+subScore);
+
+
 
 
             return quizResultMapper.quizHandIn(quizResult.getId(), quizResult.getScAnswerIds(),
                     quizResult.getMcAnswerIds(),quizResult.getBfAnswer(), quizResult.getSubAnswer(),
-                    scScore,mcScore,bfScore, state,String.join(",",obBriefStatus),userId);
+                    scScore,mcScore,bfScore, subScore,String.join(",", subPerScore),
+                    state,String.join(",",obBriefStatus),userId);
 
         }
         return -1;
@@ -295,7 +367,7 @@ public class QuizResultServiceImpl implements QuizResultService {
 
         //todo 权限判断 本班教师可查看，试卷对应的学生本人可以查看
         QuizResult quizResult = quizResultMapper.getQuizResultById(id);
-        if(quizResult!=null&&quizResult.getState()!=0){
+        if(quizResult!=null){
             QuizResultVo qrVo = new QuizResultVo();
             qrVo.setId(id);
             //todo 获取用户信息vo
@@ -318,7 +390,7 @@ public class QuizResultServiceImpl implements QuizResultService {
                 }
             }catch (Exception e){
                 e.printStackTrace();
-                return null;
+                subPerScore=null;
             }
             qrVo.setSubPerScore(subPerScore);
 
@@ -338,8 +410,10 @@ public class QuizResultServiceImpl implements QuizResultService {
                 map.put("scQuestions",(List<QuestionVo>) scMap.get("questions"));
                 scPoints=(float)scMap.get("point");
 
-                List<String> scAnswerIds = Arrays.asList(quizResult.getScAnswerIds().split(","));
-                qrVo.setScAnswerIds(scAnswerIds);
+                if(!StringUtils.isNullOrEmpty(quizResult.getScAnswerIds())) {
+                    List<String> scAnswerIds = Arrays.asList(quizResult.getScAnswerIds().split(","));
+                    qrVo.setScAnswerIds(scAnswerIds);
+                }
 
             }
 
@@ -352,22 +426,31 @@ public class QuizResultServiceImpl implements QuizResultService {
                 mcPoints=(float)mcMap.get("point");
 
                 List<List<String>> mcAnswerIds = new ArrayList<>();
-                for (String str:quizResult.getMcAnswerIds().split(",,,")){
-                    mcAnswerIds.add(Arrays.asList(str.split(",")));
+                if(!StringUtils.isNullOrEmpty(quizResult.getMcAnswerIds())){
+                    for (String str:quizResult.getMcAnswerIds().split(",,,")){
+                        mcAnswerIds.add(Arrays.asList(str.split(",")));
+                    }
+                    qrVo.setMcAnswerIds(mcAnswerIds);
                 }
-                qrVo.setMcAnswerIds(mcAnswerIds);
+
 
             }
             //填空题
             if(!StringUtils.isNullOrEmpty(quizResult.getBfQuestionIds())){
-                String[] bfQids = quizResult.getBfQuestionIds().split(",");
-                Map<String, Object> bfMap = IquizTool.GetQuestionsAndPointsByIds(bfQids, questionMapper, optionMapper);
+                if(!StringUtils.isNullOrEmpty(quizResult.getBfQuestionIds())){
+                    String[] bfQids = quizResult.getBfQuestionIds().split(",");
+                    Map<String, Object> bfMap = IquizTool.GetQuestionsAndPointsByIds(bfQids, questionMapper, optionMapper);
 
-                map.put("bfQuestions",(List<QuestionVo>) bfMap.get("questions"));
-                bfPoints=(float)bfMap.get("point");
+                    map.put("bfQuestions",(List<QuestionVo>) bfMap.get("questions"));
+                    bfPoints=(float)bfMap.get("point");
 
-                List<String> bfAnswer = Arrays.asList(quizResult.getBfAnswer().split("\\*\\^\\*"));
-                qrVo.setBfAnswer(bfAnswer);
+                    if(!StringUtils.isNullOrEmpty(quizResult.getBfAnswer())){
+                        List<String> bfAnswer = Arrays.asList(quizResult.getBfAnswer().split("\\*\\^\\*"));
+                        qrVo.setBfAnswer(bfAnswer);
+                    }
+
+                }
+
             }
 
             //主观题
@@ -378,8 +461,12 @@ public class QuizResultServiceImpl implements QuizResultService {
                 map.put("subQuestions",(List<QuestionVo>) subMap.get("questions"));
                 subPoints=(float)subMap.get("point");
 
-                List<String> subAnswer = Arrays.asList(quizResult.getSubAnswer().split("\\*\\^\\*"));
-                qrVo.setSubAnswer(subAnswer);
+                if(!StringUtils.isNullOrEmpty(quizResult.getSubAnswer())){
+                    List<String> subAnswer = Arrays.asList(quizResult.getSubAnswer().split("\\*\\^\\*"));
+                    qrVo.setSubAnswer(subAnswer);
+                }
+
+
             }
             qrVo.setQuestions(map);
 
@@ -388,12 +475,22 @@ public class QuizResultServiceImpl implements QuizResultService {
 
             if(scPoints!=0)
                 qrVo.setScAllScore(NumberUtil.round(100*(scPoints/sumPoints),2));
+            else
+                qrVo.setScAllScore(new BigDecimal(0));
             if(mcPoints!=0)
                 qrVo.setMcAllScore(NumberUtil.round(100*(mcPoints/sumPoints),2));
+            else
+                qrVo.setMcAllScore(new BigDecimal(0));
+
             if(bfPoints!=0)
                 qrVo.setBfAllScore(NumberUtil.round(100*(bfPoints/sumPoints),2));
-            if(scPoints!=0)
+            else
+                qrVo.setBfAllScore(new BigDecimal(0));
+
+            if(subPoints!=0)
                 qrVo.setSubAllScore(NumberUtil.round(100*(subPoints/sumPoints),2));
+            else
+                qrVo.setSubAllScore(new BigDecimal(0));
 
 
             List<Integer> rank = rank(quizResultMapper.getRankIdsByQid(quiz.getId()), id);
@@ -453,7 +550,8 @@ public class QuizResultServiceImpl implements QuizResultService {
                                             .get(1));
 
                         //知识点正确率统计
-                        qrVo.setObBriefStatus(result.getObBriefStatus().split(","));
+                        if(!StringUtils.isNullOrEmpty(result.getObBriefStatus()))
+                            qrVo.setObBriefStatus(result.getObBriefStatus().split(","));
 
                         String []qids = new String[0];
                         if(result.getScQuestionIds()!=null){
@@ -469,9 +567,11 @@ public class QuizResultServiceImpl implements QuizResultService {
                             qids=ArrayUtil.addAll(qids,bfQid);
                         }
 
-                        String[] obBriefStatus = result.getObBriefStatus().split(",");
+                        String[] obBriefStatus = null;
+                        if(!StringUtils.isNullOrEmpty(result.getObBriefStatus()))
+                            obBriefStatus = result.getObBriefStatus().split(",");
 
-                        if(qids.length>0){
+                        if(qids.length>0&&obBriefStatus!=null){
                             for (int i=0;i<qids.length;i++){
                                 Question question = questionMapper.getQuestionById(qids[i]);
                                 if(question!=null){
@@ -534,13 +634,29 @@ public class QuizResultServiceImpl implements QuizResultService {
 
 
     /**
-     * 学生-获取待完成的考试信息
+     * 学生-获取课堂下的考试信息
      **/
     @Override
-    public List<QuizPaperVo> getBeToCompletedQuizzes() {
+    public List<QuizPaperVo> getQuizzes(String cid) {
 
         String userId = IquizTool.getUserId();
-        List<QuizResult> results = quizResultMapper.getQuizResultsByUid(userId);
+        List<Quiz> quizzes = quizMapper.getActivedQuizzesByCid(cid);
+
+        if(quizzes.size()==0)
+            return null;
+
+        List<QuizResult> results=new ArrayList<>();
+        String[] qids=new String[quizzes.size()];
+
+        for(int i=0;i<quizzes.size();i++){
+            QuizResult result = quizResultMapper.getQuizResultsByUidAndQid(userId, quizzes.get(i).getId());
+            if(result!=null)
+                results.add(result);
+        }
+
+
+
+
         QuizPaperVo qrVo = null;
         List<QuizPaperVo>list=new ArrayList<>();
 

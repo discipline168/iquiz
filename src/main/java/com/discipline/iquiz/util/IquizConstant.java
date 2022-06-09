@@ -17,4 +17,7 @@ public class IquizConstant {
     public static String QUE_CORRECT = "1";
     public static String QUE_HALF_CORRECT = "2";
 
+    public static int QUIZ_RESULT_UNDONE=0;
+    public static int QUIZ_RESULT_DONE=2;
+
 }

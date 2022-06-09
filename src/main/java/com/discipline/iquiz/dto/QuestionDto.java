@@ -8,8 +8,10 @@ public class QuestionDto {
     private String content;
     private int type;
     private int point;
+    private String knowledge;
 
     private String qbankId;
     private String[] optionContents;
     private int[] answerIndexes;
+
 }

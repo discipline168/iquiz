@@ -20,4 +20,8 @@ public interface UserMapper {
     //获取正确密码：用于token验证
     @Select("SELECT password FROM `user` WHERE id = #{id}")
     String getRoleById(@Param("id")String id);
+
+    //获取用户信息
+    @Select("SELECT id,user_name,role,avatar FROM user WHERE id = #{id}")
+    User getUserInfoById(@Param("id")String id);
 }

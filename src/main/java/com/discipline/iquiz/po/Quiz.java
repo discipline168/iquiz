@@ -17,6 +17,7 @@ public class Quiz {
     private String qbankId;
     private int isRandomOption;
     private int isPreview;
+    private int subAuto;
     private int duration;
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm", timezone = "GMT+8")
     private Date time;

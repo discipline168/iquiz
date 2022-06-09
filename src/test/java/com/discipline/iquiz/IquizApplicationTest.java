@@ -1,10 +1,12 @@
 package com.discipline.iquiz;
 
+import cn.hutool.core.text.TextSimilarity;
 import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.RandomUtil;
 import com.discipline.iquiz.dto.QuestionDto;
 import com.discipline.iquiz.mapper.OptionMapper;
 import com.discipline.iquiz.service.impl.QuestionServiceImpl;
+import com.discipline.iquiz.util.IquizTool;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
@@ -44,6 +46,14 @@ public class IquizApplicationTest {
     @Test
     void just(){
         System.out.println(ArrayUtil.addAll(new String[0])[0]);
+    }
+
+
+    @Test
+    void text(){
+        double similar = TextSimilarity.similar("基因的是生物的基础", "生物的基本是基因");
+        double v = IquizTool.findSimilarity("基因的是生物的基础", "生物的基本是基因");
+        System.out.println(v);
     }
 
 }

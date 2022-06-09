@@ -27,6 +27,7 @@ public class QuizResultController {
     @ResponseBody
     public String start(@PathVariable("id") String id) throws Exception{
         QuizPaperVo quizResult = quizResultServiceImpl.getQuizPaper(id);
+
         if(quizResult!=null)
             return objectMapper.writeValueAsString(JsonData.success(null,quizResult));
         return objectMapper.writeValueAsString(JsonData.fail("获取考试结果信息失败"));
@@ -80,10 +81,10 @@ public class QuizResultController {
 
 
     @RequiresRoles("student")
-    @GetMapping("/tbcQuizzes")
+    @GetMapping("/quizzes/{cid}")
     @ResponseBody
-    public String tbcQuizzes() throws Exception {
-        List<QuizPaperVo> quizzes = quizResultServiceImpl.getBeToCompletedQuizzes();
+    public String quizzes(@PathVariable("cid") String cid) throws Exception {
+        List<QuizPaperVo> quizzes = quizResultServiceImpl.getQuizzes(cid);
         if(quizzes!=null)
             return objectMapper.writeValueAsString(JsonData.success(null,quizzes));
         return objectMapper.writeValueAsString(JsonData.fail("获取待完成考试信息失败"));

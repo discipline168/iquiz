@@ -15,6 +15,6 @@ public interface QuizResultService {
     Map<String,Object> getClassQuizResults(String qid);
     int mark(String subScore,String id);
 
-    List<QuizPaperVo> getBeToCompletedQuizzes();
+    List<QuizPaperVo> getQuizzes(String cid);
 
 }
